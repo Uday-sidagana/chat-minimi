@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chat-minimi"
+version = "0.1.0"
+description = "A fast, one-tool web chat agent with timestamped, inspectable memory"
+requires-python = ">=3.11"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "openai>=2,<3", "python-dotenv>=1,<2", "psycopg[binary]>=3.2,<4"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "httpx>=0.28,<1"]
+
+[project.scripts]
+minimi = "minimi.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["minimi*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.vercel]
+entrypoint = "app:app"
+
+[tool.vercel.fastapi.static]
+cdn = false

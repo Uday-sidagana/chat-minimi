@@ -1,0 +1,10 @@
+{
+  "live_browser_chat": true,
+  "cross_chat_memory": true,
+  "persisted_after_reload": true,
+  "workspace_isolation": true,
+  "safe_markdown": true,
+  "unicode_citations": true,
+  "mobile_no_overflow": true,
+  "javascript_errors": []
+}

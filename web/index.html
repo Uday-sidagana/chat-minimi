@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f8f9f6" />
+    <meta
+      name="description"
+      content="A fast chat agent with one tool—web search—and a memory you can inspect."
+    />
+    <title>minimi — a little more thoughtful</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/style.css" />
+    <script src="/assets/vendor/markdown-it.min.js" defer></script>
+    <script src="/assets/app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <a class="brand" href="/" aria-label="Minimi home"
+          ><span class="brand-mark">m<span>•</span></span
+          ><span>minimi</span></a
+        ><button class="new-chat" id="new-chat">
+          <span>＋</span> New conversation <kbd>⌘ O</kbd>
+        </button>
+        <div class="sidebar-label">YOUR CONVERSATIONS</div>
+        <nav id="chats" aria-label="Conversations">
+          <p class="sidebar-empty">Your next good question starts here.</p>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="one-tool">
+            <span class="online-dot"></span> One tool. Less noise.
+          </div>
+          <p>Web search when it helps.<br />Memory when you need it.</p>
+          <a
+            href="https://github.com/Uday-sidagana/chat-minimi"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Built in the open <span>↗</span></a
+          >
+        </div>
+      </aside>
+      <div class="workspace">
+        <header class="topbar">
+          <button
+            id="menu"
+            class="icon-button mobile-menu"
+            aria-label="Toggle conversations"
+          >
+            ☰
+          </button>
+          <div class="mode-label">
+            <span class="online-dot"></span
+            ><span id="model-label">Getting ready</span
+            ><span class="divider"></span
+            ><span class="subtle">a one-tool agent</span>
+          </div>
+          <button
+            id="memory-toggle"
+            class="memory-toggle"
+            aria-expanded="false"
+            aria-controls="memory-panel"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 4h8a2 2 0 0 1 2 2v14l-6-3-6 3V6a2 2 0 0 1 2-2Z" />
+            </svg>
+            Memory <span id="memory-count">0</span>
+          </button>
+        </header>
+        <div id="setup-notice" class="setup-notice hidden" role="status"></div>
+        <main id="scroll-area" class="scroll-area">
+          <section class="welcome" id="welcome">
+            <div class="hello-mark" aria-hidden="true">
+              <svg viewBox="0 0 80 80">
+                <path
+                  d="M22 51V33c0-7 11-7 11 0v12-17c0-8 12-8 12 0v17-12c0-7 11-7 11 0v18"
+                />
+                <circle cx="60" cy="21" r="4" />
+              </svg>
+            </div>
+            <span class="eyebrow">SMALL AGENT. LONG MEMORY.</span>
+            <h1>Good questions.<br /><span>Thoughtful answers.</span></h1>
+            <p>
+              A little research. A little context. A conversation<br
+                class="desktop-break"
+              />
+              that picks up where you left off.
+            </p>
+            <div class="suggestions">
+              <button
+                data-prompt="What changed in web search APIs recently? Use official sources and include the dates."
+              >
+                <span class="suggestion-icon">↗</span
+                ><strong>Look a little deeper</strong
+                ><span>Find something current, with sources.</span></button
+              ><button
+                data-prompt="Remember that I prefer concise explanations and practical examples."
+              >
+                <span class="suggestion-icon">⌁</span
+                ><strong>Make it personal</strong
+                ><span>Tell me something worth remembering.</span></button
+              ><button
+                data-prompt="What have I asked you about so far, and when?"
+              >
+                <span class="suggestion-icon">◷</span
+                ><strong>Pick up the thread</strong
+                ><span>Revisit what you asked, and when.</span>
+              </button>
+            </div>
+          </section>
+          <section
+            id="messages"
+            class="messages"
+            aria-label="Conversation"
+            aria-live="polite"
+          ></section>
+        </main>
+        <div class="composer-wrap">
+          <div id="memory-hint" class="memory-hint hidden"></div>
+          <form id="composer" class="composer">
+            <label class="sr-only" for="prompt">Message Minimi</label
+            ><textarea
+              id="prompt"
+              rows="1"
+              maxlength="12000"
+              placeholder="Ask a question. Follow a thought."
+              required
+            ></textarea>
+            <div class="composer-bottom">
+              <label class="web-control"
+                ><svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z" /></svg
+                ><span class="sr-only">Web search mode</span
+                ><select id="web-mode">
+                  <option value="auto">Web · Auto</option>
+                  <option value="always">Web · Always</option>
+                  <option value="off">Web · Off</option>
+                </select></label
+              ><span class="composer-help"
+                >Enter to send · Shift Enter for a new line</span
+              ><button
+                type="submit"
+                id="send"
+                class="send-button"
+                aria-label="Send message"
+              >
+                ↑</button
+              ><button
+                type="button"
+                id="stop"
+                class="send-button hidden"
+                aria-label="Stop generation"
+              >
+                ■
+              </button>
+            </div>
+          </form>
+          <div class="composer-caption">
+            <span>One tool, real sources. Memory you can inspect.</span
+            ><label
+              ><span class="sr-only">Timezone</span
+              ><select id="timezone" aria-label="Timezone"></select
+            ></label>
+          </div>
+          <p id="error" class="error hidden" role="alert"></p>
+        </div>
+      </div>
+      <aside
+        id="memory-panel"
+        class="memory-panel hidden"
+        aria-label="Memory notebook"
+      >
+        <header>
+          <div>
+            <span class="eyebrow">YOUR CONTEXT, KEPT CLEAR</span>
+            <h2>Memory notebook</h2>
+          </div>
+          <button
+            id="memory-close"
+            class="icon-button"
+            aria-label="Close memory"
+          >
+            ×
+          </button>
+        </header>
+        <p class="memory-intro">
+          What you asked, exactly when you asked it. Stored in your private
+          browser workspace on this server.
+        </p>
+        <div class="memory-tabs">
+          <button id="timeline-tab" class="active">Timeline</button
+          ><button id="pinned-tab">Pinned</button>
+        </div>
+        <label class="memory-search"
+          ><span class="sr-only">Find a past question</span
+          ><input
+            id="memory-search"
+            type="search"
+            maxlength="200"
+            placeholder="Find a past question…"
+        /></label>
+        <div class="date-filter">
+          <label for="memory-day">Asked on</label
+          ><input id="memory-day" type="date" /><button
+            id="clear-date"
+            class="text-button"
+          >
+            Clear
+          </button>
+        </div>
+        <div id="memory-results" class="memory-results"></div>
+        <footer>
+          <a href="/api/export" download>Export history ↗</a
+          ><button id="forget" class="text-button danger">
+            Delete my history
+          </button>
+        </footer>
+      </aside>
+    </div>
+    <div id="backdrop" class="backdrop hidden"></div>
+  </body>
+</html>
