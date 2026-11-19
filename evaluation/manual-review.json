@@ -1,0 +1,84 @@
+{
+  "reviewed_at_utc": "2026-11-19T15:12:57.762509+00:00",
+  "reviewer": "Coding assistant; not independent human review",
+  "scope": "Authored 12-case live smoke run; source existence and selected claims checked, not a broad accuracy benchmark",
+  "cases": [
+    {
+      "id": "direct-answer",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "cross-chat-memory",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "timestamp-recall",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "memory-correction",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "missing-memory",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "semantic-paraphrase",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "un-pinned-name",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "ambiguous-date-range",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "historical-prompt-injection",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "unsupported-personal-fact",
+      "status": "pass",
+      "basis": "Read the saved response against authored history/expected behaviour; see full response in live-results.json."
+    },
+    {
+      "id": "live-web",
+      "status": "pass",
+      "basis": "Directly fetched official Python download page; latest version and release date match the response.",
+      "sources": [
+        "https://www.python.org/downloads/",
+        "https://www.python.org/downloads/source/"
+      ]
+    },
+    {
+      "id": "contextual-web-followup",
+      "status": "partial",
+      "basis": "Latest non-prerelease version matches the official artifact index. Answer gives November 11 blog publication date; artifact release index says November 10. Citation points to download page, rather than dated release post.",
+      "latest_non_prerelease": "v26.13.1",
+      "artifact_date": "2026-11-10",
+      "blog_publication_date": "2026-11-11",
+      "sources": [
+        "https://nodejs.org/dist/index.json",
+        "https://nodejs.org/en/blog/release/v26.13.1",
+        "https://nodejs.org/en/download"
+      ]
+    }
+  ],
+  "limitations": [
+    "A provider citation is not proof of source entailment.",
+    "Memory reference validation establishes source identity, not semantic correctness.",
+    "Single samples do not estimate general accuracy."
+  ]
+}

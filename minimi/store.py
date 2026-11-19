@@ -45,6 +45,7 @@ SCHEMA = [
     """CREATE TABLE IF NOT EXISTS mm_messages (seq INTEGER PRIMARY KEY AUTOINCREMENT,id TEXT UNIQUE NOT NULL,chat_id TEXT NOT NULL REFERENCES mm_chats(id) ON DELETE CASCADE,space_id TEXT NOT NULL REFERENCES mm_spaces(id),role TEXT NOT NULL,content TEXT NOT NULL,created_at TEXT NOT NULL,timezone TEXT NOT NULL,status TEXT NOT NULL,pinned INTEGER NOT NULL DEFAULT 0,metadata TEXT NOT NULL DEFAULT '{}')""",
     """CREATE TABLE IF NOT EXISTS mm_requests (id TEXT PRIMARY KEY,space_id TEXT NOT NULL REFERENCES mm_spaces(id),chat_id TEXT NOT NULL REFERENCES mm_chats(id) ON DELETE CASCADE,request_key TEXT NOT NULL,fingerprint TEXT NOT NULL,user_id TEXT NOT NULL,assistant_id TEXT NOT NULL,status TEXT NOT NULL,created_at TEXT NOT NULL,lease_until TEXT NOT NULL,UNIQUE(space_id,request_key))""",
     """CREATE TABLE IF NOT EXISTS mm_daily (day TEXT PRIMARY KEY,turns INTEGER NOT NULL)""",
+    """CREATE TABLE IF NOT EXISTS mm_embeddings (message_id TEXT NOT NULL REFERENCES mm_messages(id) ON DELETE CASCADE,space_id TEXT NOT NULL REFERENCES mm_spaces(id),model TEXT NOT NULL,vector TEXT NOT NULL,PRIMARY KEY(message_id,model))""",
     "CREATE INDEX IF NOT EXISTS mm_message_space_time ON mm_messages(space_id,created_at,seq)",
     "CREATE INDEX IF NOT EXISTS mm_message_chat_seq ON mm_messages(chat_id,seq)",
 ]
@@ -111,12 +112,13 @@ class Store:
             )
             return sid, token
 
-    def chats(self, sid):
+    def chats(self, sid, *, all_chats=False):
         with self.connect() as db:
             return [
                 dict(r)
                 for r in db.execute(
-                    "SELECT id,title,created_at,updated_at FROM mm_chats WHERE space_id=? ORDER BY updated_at DESC LIMIT 100",
+                    "SELECT id,title,created_at,updated_at FROM mm_chats WHERE space_id=? ORDER BY updated_at DESC"
+                    + ("" if all_chats else " LIMIT 100"),
                     (sid,),
                 )
             ]
@@ -423,3 +425,38 @@ class Store:
                 reverse=True,
             )
         return records, total
+
+    def embeddings(self, sid, model):
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT e.message_id,e.vector FROM mm_embeddings e JOIN "
+                "(SELECT id FROM mm_messages WHERE space_id=? AND role='user' "
+                "AND status='completed' ORDER BY seq DESC LIMIT 129) m "
+                "ON m.id=e.message_id WHERE e.space_id=? AND e.model=?",
+                (sid, sid, model),
+            ).fetchall()
+        return {r["message_id"]: json.loads(r["vector"]) for r in rows}
+
+    def save_embedding(self, sid, mid, model, vector):
+        self.save_embeddings(sid, model, [(mid, vector)])
+
+    def save_embeddings(self, sid, model, entries):
+        if not entries:
+            return
+        # One transaction and one SQL statement even for a backfill batch.
+        values = ",".join("(?,?,?)" for _ in entries)
+        args = tuple(
+            value
+            for mid, vector in entries
+            for value in (mid, model, json.dumps(vector))
+        ) + (sid,)
+        with self.connect() as db:
+            db.execute(
+                "WITH incoming(message_id,model,vector) AS (VALUES " + values + ") "
+                "INSERT INTO mm_embeddings(message_id,space_id,model,vector) "
+                "SELECT m.id,m.space_id,v.model,v.vector FROM mm_messages m "
+                "JOIN incoming v ON m.id=v.message_id "
+                "WHERE m.space_id=? AND m.role='user' AND m.status='completed' "
+                "ON CONFLICT(message_id,model) DO UPDATE SET vector=excluded.vector",
+                args,
+            )

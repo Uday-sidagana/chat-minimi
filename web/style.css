@@ -990,3 +990,33 @@ select:focus-visible {
     transition: none !important;
   }
 }
+
+.memory-citation {
+  background: #e7eee0;
+  color: #2e573a;
+}
+.memory-references {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.memory-references button {
+  padding: 6px 9px;
+  border: 1px solid #dce5d4;
+  border-radius: 7px;
+  background: #f2f5ec;
+  color: #355a3c;
+  font: inherit;
+  cursor: pointer;
+}
+.memory-references button:hover {
+  background: #e3ecd8;
+}
+.memory-target .user-bubble {
+  outline: 2px solid #8ca368;
+  outline-offset: 5px;
+}

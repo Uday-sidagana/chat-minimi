@@ -16,6 +16,8 @@ class Settings:
     max_daily_turns: int = 200
     demo_password: str = ""
     hosted: bool = False
+    semantic_memory: bool = True
+    embedding_model: str = "text-embedding-3-small"
 
     @classmethod
     def load(cls):
@@ -32,4 +34,7 @@ class Settings:
             max_daily_turns=int(get("MAX_DAILY_TURNS", "200")),
             demo_password=get("DEMO_PASSWORD"),
             hosted=os.environ.get("VERCEL") == "1",
+            semantic_memory=get("SEMANTIC_MEMORY", "true").lower()
+            in ("true", "1", "yes"),
+            embedding_model=get("EMBEDDING_MODEL", "text-embedding-3-small"),
         )

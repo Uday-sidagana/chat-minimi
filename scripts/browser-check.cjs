@@ -1,31 +1,139 @@
-const {chromium}=require('../runs/browser-check/node_modules/playwright');
-const fs=require('fs');const path=require('path');
-const root=path.resolve(__dirname,'..');
-if(!process.argv.includes('--live'))throw new Error('Pass --live to enable two paid chat requests.');
-fs.mkdirSync(path.join(root,'runs'),{recursive:true});
-(async()=>{
- const browser=await chromium.launch({headless:true});const context=await browser.newContext({viewport:{width:1440,height:1000},timezoneId:'Asia/Kolkata'});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://127.0.0.1:8010');await page.waitForFunction(()=>document.querySelector('#model-label').textContent.includes('gpt-5.4-mini'));
- if(!(await page.locator('#welcome').isVisible()))throw new Error('Welcome is not visible.');
- await page.screenshot({path:path.join(root,'runs/ui-home.png'),fullPage:true});
- const safe=await page.evaluate(()=>{const text='🌱 A fact [1]';return {citation:answerHTML(text,[{url:'https://example.com',title:'Source',start:9,end:12}]).html,html:answerHTML('<img src=x onerror=alert(1)> [bad](javascript:alert(1))',[]).html};});
- if(safe.html.includes('<img')||safe.html.includes('href="javascript:'))throw new Error('Unsafe Markdown rendering.');
- if(!safe.citation.includes('class="citation"'))throw new Error('Unicode citation was not rendered.');
- await page.locator('#prompt').fill('Remember that my demo project is called Spruce Atlas.');await page.locator('#send').click();
- await page.waitForFunction(()=>document.querySelectorAll('.message.assistant .detail-disclosure').length>0,null,{timeout:110000});
- await page.locator('#memory-toggle').click();await page.waitForSelector('.memory-card');
- if(!(await page.locator('#memory-results').textContent()).includes('Spruce Atlas'))throw new Error('Memory is not persisted.');
- await page.locator('#memory-close').click();await page.locator('#new-chat').click();
- await page.locator('#prompt').fill('What is my demo project called, and when did I tell you?');await page.locator('#send').click();
- await page.waitForFunction(()=>document.querySelectorAll('.message.assistant .detail-disclosure').length>0,null,{timeout:110000});
- if(!(await page.locator('.message.assistant .answer').textContent()).includes('Spruce Atlas'))throw new Error('Cross-chat memory missing.');
- await page.screenshot({path:path.join(root,'runs/ui-conversation.png'),fullPage:true});
- await page.reload();await page.waitForSelector('.message.assistant .answer');
- if(!(await page.locator('.message.assistant .answer').textContent()).includes('Spruce Atlas'))throw new Error('History did not survive reload.');
- await page.setViewportSize({width:390,height:844});await page.screenshot({path:path.join(root,'runs/ui-mobile.png'),fullPage:true});
- if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth))throw new Error('Mobile horizontal overflow.');
- const fresh=await browser.newContext({viewport:{width:1280,height:900}});const isolated=await fresh.newPage();await isolated.goto('http://127.0.0.1:8010');await isolated.waitForFunction(()=>document.querySelector('#model-label').textContent.includes('gpt-5.4-mini'));
- if(await isolated.locator('.message.user').count())throw new Error('Another browser saw existing messages.');
- const result={live_browser_chat:true,cross_chat_memory:true,persisted_after_reload:true,workspace_isolation:true,safe_markdown:true,unicode_citations:true,mobile_no_overflow:true,javascript_errors:errors};if(errors.length)throw new Error(errors.join('\n'));
- fs.writeFileSync(path.join(root,'evaluation/browser-results.json'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result));await browser.close();
-})().catch(e=>{console.error(e);process.exit(1);});
+const { chromium } = require("../runs/browser-check/node_modules/playwright");
+const fs = require("fs");
+const path = require("path");
+const root = path.resolve(__dirname, "..");
+if (!process.argv.includes("--live"))
+  throw new Error("Pass --live to enable two paid chat requests.");
+fs.mkdirSync(path.join(root, "runs"), { recursive: true });
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({
+    viewport: { width: 1440, height: 1000 },
+    timezoneId: "Asia/Kolkata",
+  });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("http://127.0.0.1:8010");
+  await page.waitForFunction(() =>
+    document.querySelector("#model-label").textContent.includes("gpt-5.4-mini"),
+  );
+  if (!(await page.locator("#welcome").isVisible()))
+    throw new Error("Welcome is not visible.");
+  await page.screenshot({
+    path: path.join(root, "runs/ui-home.png"),
+    fullPage: true,
+  });
+  const safe = await page.evaluate(() => {
+    const text = "🌱 A fact [1]";
+    return {
+      citation: answerHTML(text, [
+        { url: "https://example.com", title: "Source", start: 9, end: 12 },
+      ]).html,
+      html: answerHTML(
+        "<img src=x onerror=alert(1)> [bad](javascript:alert(1))",
+        [],
+      ).html,
+    };
+  });
+  if (safe.html.includes("<img") || safe.html.includes('href="javascript:'))
+    throw new Error("Unsafe Markdown rendering.");
+  if (!safe.citation.includes('class="citation"'))
+    throw new Error("Unicode citation was not rendered.");
+  await page
+    .locator("#prompt")
+    .fill("Remember that my demo project is called Spruce Atlas.");
+  await page.locator("#send").click();
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll(".message.assistant .detail-disclosure")
+        .length > 0,
+    null,
+    { timeout: 110000 },
+  );
+  await page.locator("#memory-toggle").click();
+  await page.waitForSelector(".memory-card");
+  if (
+    !(await page.locator("#memory-results").textContent()).includes(
+      "Spruce Atlas",
+    )
+  )
+    throw new Error("Memory is not persisted.");
+  await page.locator("#memory-close").click();
+  await page.locator("#new-chat").click();
+  await page
+    .locator("#prompt")
+    .fill("What is my demo project called, and when did I tell you?");
+  await page.locator("#send").click();
+  await page.waitForFunction(
+    () =>
+      document.querySelectorAll(".message.assistant .detail-disclosure")
+        .length > 0,
+    null,
+    { timeout: 110000 },
+  );
+  if (
+    !(await page.locator(".message.assistant .answer").textContent()).includes(
+      "Spruce Atlas",
+    )
+  )
+    throw new Error("Cross-chat memory missing.");
+  await page.screenshot({
+    path: path.join(root, "runs/ui-conversation.png"),
+    fullPage: true,
+  });
+  const replyChat = await page.evaluate(() => selected);
+  if (!(await page.locator(".memory-citation").count())) throw new Error("No inline conversation reference.");
+  await page.locator(".memory-citation").first().click();
+  await page.waitForSelector(".memory-target .user-bubble");
+  if (!(await page.locator(".memory-target .user-bubble").textContent()).includes("Spruce Atlas")) throw new Error("Reference did not open original user message.");
+  await page.evaluate(id => openChat(id), replyChat);
+  await page.reload();
+  await page.waitForSelector(".message.assistant .answer");
+  if (
+    !(await page.locator(".message.assistant .answer").textContent()).includes(
+      "Spruce Atlas",
+    )
+  )
+    throw new Error("History did not survive reload.");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({
+    path: path.join(root, "runs/ui-mobile.png"),
+    fullPage: true,
+  });
+  if (
+    await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)
+  )
+    throw new Error("Mobile horizontal overflow.");
+  const fresh = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+  });
+  const isolated = await fresh.newPage();
+  await isolated.goto("http://127.0.0.1:8010");
+  await isolated.waitForFunction(() =>
+    document.querySelector("#model-label").textContent.includes("gpt-5.4-mini"),
+  );
+  if (await isolated.locator(".message.user").count())
+    throw new Error("Another browser saw existing messages.");
+  const result = {
+    live_browser_chat: true,
+    cross_chat_memory: true,
+    persisted_after_reload: true,
+    workspace_isolation: true,
+    safe_markdown: true,
+    unicode_citations: true,
+    clickable_memory_references: true,
+    mobile_no_overflow: true,
+    javascript_errors: errors,
+  };
+  if (errors.length) throw new Error(errors.join("\n"));
+  fs.writeFileSync(
+    path.join(root, "evaluation/browser-results.json"),
+    JSON.stringify(result, null, 2) + "\n",
+  );
+  console.log(JSON.stringify(result));
+  await browser.close();
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

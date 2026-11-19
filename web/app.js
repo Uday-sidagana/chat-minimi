@@ -85,7 +85,7 @@ function nearBottom() {
   const el = $("#scroll-area");
   return el.scrollHeight - el.scrollTop - el.clientHeight < 130;
 }
-function answerHTML(text, citations = []) {
+function answerHTML(text, citations = [], memories = []) {
   let result = text || "";
   const slots = [];
   const sources = [];
@@ -98,10 +98,13 @@ function answerHTML(text, citations = []) {
     }
   }
   let points = Array.from(result);
-  const replacements = citations
+  const replacements = [
+    ...citations,
+    ...memories.map((r, i) => ({ ...r, memoryIndex: i + 1 })),
+  ]
     .filter(
       (c) =>
-        safeURL(c.url) &&
+        (safeURL(c.url) || c.memoryIndex) &&
         Number.isInteger(c.start) &&
         Number.isInteger(c.end) &&
         c.end > c.start &&
@@ -115,7 +118,9 @@ function answerHTML(text, citations = []) {
     const token = `MINIMICITATION${slots.length}END`;
     slots.push([
       token,
-      `<a class="citation" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer" title="${esc(c.title)}">${byURL.get(c.url)}</a>`,
+      c.memoryIndex
+        ? `<a class="citation memory-citation" href="#" data-recall-chat="${esc(c.chat_id)}" data-recall-message="${esc(c.id)}" title="${esc(datetime(c.asked_at_utc, true))} · ${esc(c.content.slice(0, 120))}">M${c.memoryIndex}</a>`
+        : `<a class="citation" href="${esc(c.url)}" target="_blank" rel="noopener noreferrer" title="${esc(c.title)}">${byURL.get(c.url)}</a>`,
     ]);
     points = [
       ...points.slice(0, c.start),
@@ -123,7 +128,10 @@ function answerHTML(text, citations = []) {
       ...points.slice(c.end),
     ];
   }
-  result = points.join("").replace(/[^]*/g, "");
+  result = points
+    .join("")
+    .replace(/[^]*/g, "")
+    .replace(/\[(?:M:[^\]\n]*|M\d+)(?:\]|$)/g, "");
   let html = md.render(result);
   for (const [token, anchor] of slots) html = html.replaceAll(token, anchor);
   return { html, sources };
@@ -131,15 +139,21 @@ function answerHTML(text, citations = []) {
 function details(meta) {
   const seconds = (n) => (typeof n === "number" ? n.toFixed(2) + "s" : "—");
   let html = `<details class="detail-disclosure"><summary>Response details${meta.memory?.length ? " · " + meta.memory.length + " remembered records" : ""}</summary><div class="detail-content">First token: ${seconds(meta.first_token_seconds)} · Total: ${seconds(meta.total_seconds)} · Web calls: ${meta.searches?.length || 0}<br>Model: ${esc(meta.model || "—")}${meta.usage?.total_tokens ? " · " + meta.usage.total_tokens + " tokens" : ""}`;
+  if (meta.retrieval)
+    html += `<br>Memory: ${esc(meta.retrieval.status === "completed" ? "semantic + keyword" : meta.retrieval.status === "date_window" ? "date-window lookup" : meta.retrieval.status === "fallback" ? "keyword fallback (semantic lookup unavailable)" : "keyword")}${typeof meta.retrieval.seconds === "number" ? " · " + seconds(meta.retrieval.seconds) : ""}`;
   for (const r of meta.memory || [])
-    html += `<a class="memory-evidence" href="#" data-recall-chat="${esc(r.chat_id)}" data-recall-message="${esc(r.id)}">${esc(r.content.slice(0, 180))}<br><small>${esc(datetime(r.asked_at_utc, true))} · ${esc(zone)}</small></a>`;
+    html += `<a class="memory-evidence" href="#" data-recall-chat="${esc(r.chat_id)}" data-recall-message="${esc(r.id)}">${esc(r.content.slice(0, 180))}<br><small>${esc(datetime(r.asked_at_utc, true))} · ${esc(zone)}${r.retrieval_reasons?.length ? " · " + esc(r.retrieval_reasons.join(" + ").replaceAll("_", " ")) : ""}</small></a>`;
   return html + "</div></details>";
 }
 function messageHTML(row) {
   if (row.role === "user")
     return `<article class="message user" id="msg-${esc(row.id)}"><div class="user-bubble">${esc(row.content)}</div><div class="message-meta"><time datetime="${esc(row.created_at)}">${esc(datetime(row.created_at))}</time><button class="pin-message ${row.pinned ? "pinned" : ""}" data-id="${esc(row.id)}" data-pinned="${row.pinned ? "true" : "false"}">${row.pinned ? "Pinned ↗" : "Pin to memory"}</button></div></article>`;
   const meta = row.metadata || {},
-    rendered = answerHTML(row.content, meta.citations || []);
+    rendered = answerHTML(
+      row.content,
+      meta.citations || [],
+      meta.memory_citations || [],
+    );
   const status =
     row.status === "completed"
       ? ""
@@ -147,6 +161,12 @@ function messageHTML(row) {
   let html = `<article class="message assistant" id="msg-${esc(row.id)}"><div class="message-header"><span class="mini-mark">m</span>minimi</div><div class="answer">${rendered.html}</div>${status}`;
   if (rendered.sources.length)
     html += `<div class="sources">${rendered.sources.map((s, i) => `<a class="source-card" href="${esc(s.url)}" target="_blank" rel="noopener noreferrer" title="${esc(s.title)}"><small>${i + 1}</small><span>${esc(safeURL(s.url).hostname.replace(/^www\./, ""))}</span>↗</a>`).join("")}</div>`;
+  if (row.status === "completed" && meta.memory_citations?.length) {
+    const unique = [
+      ...new Map(meta.memory_citations.map((r) => [r.id, r])).values(),
+    ];
+    html += `<div class="memory-references" aria-label="Conversation references"><span>From your conversations</span>${unique.map((r) => `<button data-recall-chat="${esc(r.chat_id)}" data-recall-message="${esc(r.id)}" title="${esc(r.content)}">↗ ${esc(datetime(r.asked_at_utc, true))}</button>`).join("")}</div>`;
+  }
   if (row.status === "completed")
     html += `<div class="message-meta"><span>${meta.searches?.length ? "Searched the web" : "Answered directly"}</span><time>${esc(datetime(row.created_at))}</time></div>${details(meta)}`;
   return html + "</article>";
@@ -226,6 +246,10 @@ async function openChat(id, mid = null) {
         target = document.getElementById("msg-" + mid);
       }
       target?.scrollIntoView({ block: "center", behavior: "smooth" });
+      if (target) {
+        target.classList.add("memory-target");
+        setTimeout(() => target.classList.remove("memory-target"), 2200);
+      }
     } else bottom();
   } catch (e) {
     error(e.message);

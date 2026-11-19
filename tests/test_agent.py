@@ -126,3 +126,71 @@ def test_required_search_without_observed_tool_call_is_not_completed():
 
 def test_personal_history_is_not_forced_into_web_search():
     assert search_policy("What did I ask you yesterday?", "always") == "none"
+
+
+def test_web_followup_inherits_freshness_but_personal_recall_stays_private():
+    recent = [
+        {"role": "assistant", "metadata": {"searches": [{"status": "completed"}]}}
+    ]
+    assert search_policy("What about India?", "auto", recent) == "required"
+    assert search_policy("Has that changed?", "auto", recent) == "required"
+    assert search_policy("What did I ask yesterday?", "auto", recent) == "none"
+    assert search_policy("What about India?", "off", recent) == "none"
+    assert (
+        search_policy(
+            "What about India?", "auto", [{"role": "assistant", "metadata": {}}]
+        )
+        == "auto"
+    )
+
+
+def test_memory_references_allow_only_supplied_original_user_messages(store, clock):
+    from minimi.agent import memory_references
+    from minimi.memory import context
+    from test_memory import seed
+
+    sid, _ = store.space()
+    old = store.create_chat(sid)
+    first = seed(store, sid, old["id"], "Remember that I prefer tea.")
+    new = store.create_chat(sid)
+    turn = seed(store, sid, new["id"], "What do I prefer?")
+    packet, recent = context(
+        store, sid, new["id"], "What do I prefer?", "UTC", clock[0]
+    )
+    text = f"Tea [M:{first['user_id']}] 🌱 [M:{turn['user_id']}] [M:{first['assistant_id']}] [M:forged] [1]"
+    clean, refs = memory_references(text, packet, recent)
+    assert len(refs) == 1 and refs[0]["id"] == first["user_id"]
+    assert clean[refs[0]["start"] : refs[0]["end"]] == f"[M:{first['user_id']}]"
+    assert "forged" not in clean and first["assistant_id"] not in clean
+    assert len(clean) == len(text) and clean.index("[1]") == text.index("[1]")
+
+
+def test_short_memory_reference_tokens_resolve_without_invented_sources(store, clock):
+    from minimi.agent import memory_references
+    from minimi.memory import context
+    from test_memory import seed
+
+    sid, _ = store.space()
+    old = store.create_chat(sid)
+    seed(store, sid, old["id"], "Remember that the answer is tea.")
+    new = store.create_chat(sid)
+    seed(store, sid, new["id"], "What is my drink?")
+    packet, recent = context(
+        store, sid, new["id"], "What is my drink?", "UTC", clock[0]
+    )
+    assert packet["memory_records"][0]["reference"] == "[M1]"
+    clean, refs = memory_references("Tea [M1] [M999]", packet, recent)
+    assert len(refs) == 1 and clean[refs[0]["start"] : refs[0]["end"]] == "[M1]"
+    assert "M999" not in clean
+
+
+def test_required_web_checks_have_verification_budget():
+    agent = Agent(Settings(api_key="fake"), client=object())
+    r = agent.request(
+        {"timezone": "UTC"},
+        [{"role": "user", "content": "Latest Python version?"}],
+        "required",
+    )
+    assert r["max_tool_calls"] == 4
+    assert r["reasoning"]["effort"] == "low"
+    assert [t["type"] for t in r["tools"]] == ["web_search"]

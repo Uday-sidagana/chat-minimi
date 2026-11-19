@@ -160,3 +160,45 @@ def test_cookie_is_httponly_and_security_headers_present(client):
     with TestClient(create_app(Settings(), store=client.app.state.storage())) as other:
         r = other.get("/api/session")
         assert "httponly" in r.headers["set-cookie"].lower()
+
+
+def test_export_includes_conversations_beyond_sidebar_limit(client, store):
+    sid, _ = store.space(client.cookies.get("minimi_workspace"))
+    old = store.create_chat(sid)
+    turn, _ = store.begin(
+        sid, old["id"], str(uuid4()), "Oldest conversation must export.", "UTC", "off"
+    )
+    store.finish(turn, "Recorded.", {})
+    for _ in range(101):
+        store.create_chat(sid)
+    assert len(client.get("/api/chats").json()) == 100
+    assert "Oldest conversation must export." in client.get("/api/export").text
+
+
+def test_referenced_memory_is_saved_with_final_response(client, store, agent):
+    from test_memory import seed
+
+    sid, _ = store.space(client.cookies.get("minimi_workspace"))
+    old = store.create_chat(sid)
+    source = seed(store, sid, old["id"], "Remember that my favourite drink is tea.")
+
+    async def referenced(packet, recent, policy):
+        yield {"type": "delta", "text": "Tea."}
+        yield {
+            "type": "result",
+            "text": f"Tea [M:{source['user_id']}] [M:invented]",
+            "citations": [],
+            "searches": [],
+            "usage": {},
+            "model": "fake",
+        }
+
+    agent.events = referenced
+    result = frames(
+        client.post(
+            "/api/chats/" + chat(client) + "/messages",
+            json=payload(text="What do I drink?"),
+        )
+    )[-1]["message"]
+    assert result["metadata"]["memory_citations"][0]["id"] == source["user_id"]
+    assert "invented" not in result["content"]

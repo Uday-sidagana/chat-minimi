@@ -38,7 +38,16 @@ def test_postgres_memory_is_durable_and_scoped():
         assert total == 1 and records[0]["content"].endswith("Amber Finch.")
         assert reopened.recall(other, "project")[1] == 0
         assert reopened.get_message(sid, turn["assistant_id"])["status"] == "completed"
+        reopened.save_embeddings(
+            sid,
+            "test",
+            [(turn["user_id"], [1.0, 0.0]), (turn["assistant_id"], [0.0, 1.0])],
+        )
+        assert reopened.embeddings(sid, "test") == {turn["user_id"]: [1.0, 0.0]}
+        assert reopened.embeddings(other, "test") == {}
         reopened.forget(sid)
+        reopened.save_embedding(sid, turn["user_id"], "test", [1.0, 0.0])
+        assert reopened.embeddings(sid, "test") == {}
         assert reopened.chats(sid) == []
     finally:
         with psycopg.connect(url, autocommit=True) as connection:

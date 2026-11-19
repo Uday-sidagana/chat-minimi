@@ -185,3 +185,50 @@ def test_clear_history_cannot_be_resurrected_by_late_completion(store):
     store.forget(sid)
     store.finish(turn, "Late answer", {})
     assert not store.chats(sid) and store.get_message(sid, turn["assistant_id"]) is None
+
+
+def test_context_content_budget_and_coverage_with_long_history(store, clock):
+    sid, _ = store.space()
+    old = store.create_chat(sid)
+    for i in range(24):
+        seed(
+            store,
+            sid,
+            old["id"],
+            f"Remember that note {i}: " + "x" * 10000,
+            clock[0] - timedelta(days=1, minutes=100 - i * 3),
+        )
+    store.clock = lambda: clock[0]
+    new = store.create_chat(sid)
+    question = "What did I ask yesterday? " + "y" * 11000
+    turn, _ = store.begin(
+        sid, new["id"], str(uuid4()), question, "UTC", "auto", max_daily=1000
+    )
+    packet, recent = context(store, sid, new["id"], question, "UTC", clock[0])
+    assert sum(len(r["content"]) for r in packet["memory_records"]) <= 16000
+    assert sum(len(r["content"]) for r in packet["memory_records"] + recent) <= 36000
+    assert recent[-1]["id"] == turn["user_id"] and recent[-1]["content"] == question
+    assert packet["matched_records_included"] < packet["matched_record_count"]
+
+
+def test_ambiguous_relative_and_absolute_dates_require_clarification(store, clock):
+    sid, _ = store.space()
+    chat = store.create_chat(sid)
+    query = "What did I ask yesterday and on 2026-10-02?"
+    seed(store, sid, chat["id"], query)
+    packet, _ = context(store, sid, chat["id"], query, "UTC", clock[0])
+    assert packet["recall_scope"] is None
+    assert packet["date_window_status"] == "ambiguous_or_unsupported"
+
+
+def test_recent_cross_chat_context_can_recall_name_without_keyword_overlap(
+    store, clock
+):
+    sid, _ = store.space()
+    old = store.create_chat(sid)
+    target = seed(store, sid, old["id"], "I'm Uday.", clock[0] - timedelta(days=1))
+    store.clock = lambda: clock[0]
+    new = store.create_chat(sid)
+    seed(store, sid, new["id"], "What's my name?")
+    packet, _ = context(store, sid, new["id"], "What's my name?", "UTC", clock[0])
+    assert any(r["id"] == target["user_id"] for r in packet["memory_records"])

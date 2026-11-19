@@ -1,0 +1,219 @@
+{
+  "run_at_utc": "2026-11-19T14:45:28.499973+00:00",
+  "configuration": {
+    "model": "gpt-5.4-mini",
+    "reasoning": "none",
+    "only_tool": "web_search",
+    "max_tool_calls": 2,
+    "max_output_tokens": 2400
+  },
+  "notice": "Six authored smoke cases, one sample each. Phrase/source/date checks are not a general factual-accuracy or semantic-grounding benchmark. Missing-memory response requires manual review. Latency is local/provider dependent. Synthetic history is seeded only in isolated temporary evaluation databases; the shipped chat UI has no fabricated personal history.",
+  "summary": {
+    "completed": 6,
+    "cases": 6,
+    "mean_first_token_seconds": 2.2185804589729137,
+    "mean_total_seconds": 2.5586908426290997,
+    "all_automated_checks_passed": true
+  },
+  "cases": [
+    {
+      "id": "direct-answer",
+      "question": "What is 17 plus 25? Reply with the number.",
+      "status": "completed",
+      "checks": {
+        "expected_phrase_present": true,
+        "no_unnecessary_web_search": true
+      },
+      "first_token_seconds": 5.440520228003152,
+      "total_seconds": 5.8719471039948985,
+      "search_calls": 0,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 5142,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 2560,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 5,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5147
+      },
+      "answer": "42",
+      "citations": [],
+      "error_type": null
+    },
+    {
+      "id": "cross-chat-memory",
+      "question": "What is my project codename?",
+      "status": "completed",
+      "checks": {
+        "expected_phrase_present": true,
+        "no_unnecessary_web_search": true
+      },
+      "first_token_seconds": 1.1435196199454367,
+      "total_seconds": 1.32138794392813,
+      "search_calls": 0,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 5311,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 4736,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 14,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5325
+      },
+      "answer": "Your project codename is **Paper Kite**.",
+      "citations": [],
+      "error_type": null
+    },
+    {
+      "id": "timestamp-recall",
+      "question": "What did I ask on 2026-11-18, and when?",
+      "status": "completed",
+      "checks": {
+        "expected_phrase_present": true,
+        "recorded_date_present": true,
+        "no_unnecessary_web_search": true
+      },
+      "first_token_seconds": 0.8923514949856326,
+      "total_seconds": 1.2992065120488405,
+      "search_calls": 0,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 5399,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 4608,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 58,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5457
+      },
+      "answer": "On **2026-11-18**, you asked:\n\n> \u201cHow can I get from Lisbon airport to the city center?\u201d\n\nIt was asked at **2026-11-18T14:45:28.499973+00:00** (UTC).",
+      "citations": [],
+      "error_type": null
+    },
+    {
+      "id": "memory-correction",
+      "question": "What is my project name now?",
+      "status": "completed",
+      "checks": {
+        "expected_phrase_present": true,
+        "no_unnecessary_web_search": true
+      },
+      "first_token_seconds": 1.4458440559683368,
+      "total_seconds": 1.6173973479308188,
+      "search_calls": 0,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 5485,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 4736,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 13,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5498
+      },
+      "answer": "Your project name is **Amber Finch**.",
+      "citations": [],
+      "error_type": null
+    },
+    {
+      "id": "missing-memory",
+      "question": "What birthday did I previously tell you for my mother?",
+      "status": "completed",
+      "checks": {
+        "no_unnecessary_web_search": true
+      },
+      "first_token_seconds": 0.8449741409858689,
+      "total_seconds": 1.250190295977518,
+      "search_calls": 0,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 5144,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 4736,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 44,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5188
+      },
+      "answer": "I can\u2019t find any previously stored conversation record about your mother\u2019s birthday in the information available to me right now. If you want, tell me again and I can help remember it within this chat.",
+      "citations": [],
+      "error_type": null
+    },
+    {
+      "id": "live-web",
+      "question": "Find the current stable Python release on python.org. Cite the official release source and include its date.",
+      "status": "completed",
+      "checks": {
+        "search_observed": true,
+        "official_citation_present": true
+      },
+      "first_token_seconds": 3.5442732139490545,
+      "total_seconds": 3.9920158518943936,
+      "search_calls": 1,
+      "model": "gpt-5.4-mini-2026-03-17",
+      "usage": {
+        "input_tokens": 8940,
+        "input_tokens_details": {
+          "cache_write_tokens": 0,
+          "cached_tokens": 0,
+          "cache_write_tokens_details": {
+            "ttl_12h_tokens": 0,
+            "ttl_30m_tokens": 0
+          }
+        },
+        "output_tokens": 120,
+        "output_tokens_details": {
+          "reasoning_tokens": 44
+        },
+        "total_tokens": 9060
+      },
+      "answer": "The current stable Python release on python.org is **Python 3.15.2**, listed as the **latest Python 3 release** on the official Python downloads page. The release date is **October 25, 2026**. ([python.org](https://www.python.org/downloads/source/?utm_source=openai))",
+      "citations": [
+        {
+          "url": "https://www.python.org/downloads/source/?utm_source=openai",
+          "title": "Python Source Releases | Python.org",
+          "start": 193,
+          "end": 267
+        }
+      ],
+      "error_type": null
+    }
+  ]
+}

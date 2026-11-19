@@ -5,6 +5,7 @@
   "workspace_isolation": true,
   "safe_markdown": true,
   "unicode_citations": true,
+  "clickable_memory_references": true,
   "mobile_no_overflow": true,
   "javascript_errors": []
 }

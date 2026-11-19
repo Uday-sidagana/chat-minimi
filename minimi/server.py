@@ -10,8 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from .config import ROOT, Settings
 from .store import Store, Conflict, Limited
-from .memory import context, date_scope, record
-from .agent import Agent, AgentError, search_policy
+from .memory import context, date_scope, record, recall_intent
+from .semantic import retrieve as semantic_retrieve
+from .agent import Agent, AgentError, search_policy, memory_references
 
 
 class Send(BaseModel):
@@ -246,7 +247,7 @@ def create_app(settings=None, store=None, agent=None):
         sid = identity(request, response)
 
         def lines():
-            for chat in storage().chats(sid):
+            for chat in storage().chats(sid, all_chats=True):
                 # Pages are emitted newest first; seq supplies original chronology.
                 before = None
                 while True:
@@ -318,9 +319,36 @@ def create_app(settings=None, store=None, agent=None):
             iterator = None
             pending = None
             try:
-                packet, recent = context(
-                    database, sid, cid, body.text, body.timezone, database.clock()
+                semantic = []
+                retrieval = {"status": "disabled"}
+                dated = recall_intent(body.text) and date_scope(
+                    body.text, database.clock(), body.timezone
                 )
+                if config.semantic_memory and hasattr(model, "client") and not dated:
+                    yield event(
+                        "status", phase="memory", text="Finding relevant memories"
+                    )
+                    semantic, retrieval = await semantic_retrieve(
+                        database,
+                        sid,
+                        turn["user_id"],
+                        body.text,
+                        model.client,
+                        config.embedding_model,
+                    )
+                elif dated:
+                    retrieval = {"status": "date_window"}
+                packet, recent = context(
+                    database,
+                    sid,
+                    cid,
+                    body.text,
+                    body.timezone,
+                    database.clock(),
+                    semantic=semantic,
+                )
+                metadata["search_policy"] = search_policy(body.text, body.web, recent)
+                metadata["retrieval"] = retrieval
                 selected = [*packet["memory_records"]]
                 metadata.update(
                     {
@@ -378,7 +406,9 @@ def create_app(settings=None, store=None, agent=None):
                         "finished_at_utc": datetime.now(timezone.utc).isoformat(),
                     }
                 )
-                database.finish(turn, final["text"], metadata)
+                clean, references = memory_references(final["text"], packet, recent)
+                metadata["memory_citations"] = references
+                database.finish(turn, clean, metadata)
                 yield event(
                     "done", message=database.get_message(sid, turn["assistant_id"])
                 )
