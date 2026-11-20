@@ -37,6 +37,8 @@ Local data is stored in `.data/minimi.sqlite`. `.env` and `.data/` are ignored b
 
 ## Try it
 
+Open **Quick guide** in the app header for a six-step walkthrough with ready-to-use prompts. Prompts are prepared for review, never sent automatically.
+
 1. Say: “Remember that my project is called Paper Kite.”
 2. Start a new chat: “What is my project called, and when did I tell you?”
 3. Click the **M1** citation to open the original message. The highlighted source shows exactly what you said and when.

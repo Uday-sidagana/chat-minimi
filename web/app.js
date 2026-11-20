@@ -652,3 +652,49 @@ document.addEventListener("keydown", (e) => {
     $("#model-label").textContent = "Setup needed";
   }
 })();
+
+// Native dialog provides focus containment, Escape dismissal and focus return.
+const guide = $("#quick-guide");
+function openGuide() {
+  if (!guide.open) guide.showModal();
+}
+$("#guide-toggle").onclick = openGuide;
+$("#welcome-guide").onclick = openGuide;
+$("#guide-close").onclick = () => guide.close();
+guide.addEventListener("click", (e) => {
+  if (e.target === guide) {
+    const box = guide.getBoundingClientRect();
+    if (
+      e.clientX < box.left ||
+      e.clientX > box.right ||
+      e.clientY < box.top ||
+      e.clientY > box.bottom
+    )
+      guide.close();
+  }
+});
+document.querySelectorAll("[data-guide-prompt]").forEach((button) => {
+  button.onclick = async () => {
+    if (busy) {
+      guide.close();
+      error(
+        "Wait for the current reply, or stop it, before trying the next step.",
+      );
+      return;
+    }
+    try {
+      if (button.hasAttribute("data-guide-new-chat")) await newChat();
+      $("#prompt").value = button.dataset.guidePrompt;
+      $("#prompt").dispatchEvent(new Event("input"));
+      guide.close();
+      $("#prompt").focus();
+    } catch (e) {
+      guide.close();
+      error(e.message);
+    }
+  };
+});
+$("#guide-memory").onclick = () => {
+  guide.close();
+  showMemory(true);
+};

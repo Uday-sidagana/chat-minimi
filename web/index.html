@@ -55,17 +55,27 @@
             ><span class="divider"></span
             ><span class="subtle">a one-tool agent</span>
           </div>
-          <button
-            id="memory-toggle"
-            class="memory-toggle"
-            aria-expanded="false"
-            aria-controls="memory-panel"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8 4h8a2 2 0 0 1 2 2v14l-6-3-6 3V6a2 2 0 0 1 2-2Z" />
-            </svg>
-            Memory <span id="memory-count">0</span>
-          </button>
+          <div class="header-actions">
+            <button
+              id="guide-toggle"
+              class="guide-toggle"
+              aria-haspopup="dialog"
+              aria-controls="quick-guide"
+            >
+              Quick guide
+            </button>
+            <button
+              id="memory-toggle"
+              class="memory-toggle"
+              aria-expanded="false"
+              aria-controls="memory-panel"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 4h8a2 2 0 0 1 2 2v14l-6-3-6 3V6a2 2 0 0 1 2-2Z" />
+              </svg>
+              Memory <span id="memory-count">0</span>
+            </button>
+          </div>
         </header>
         <div id="setup-notice" class="setup-notice hidden" role="status"></div>
         <main id="scroll-area" class="scroll-area">
@@ -86,6 +96,14 @@
               />
               that picks up where you left off.
             </p>
+            <button
+              id="welcome-guide"
+              class="welcome-guide"
+              aria-haspopup="dialog"
+              aria-controls="quick-guide"
+            >
+              New here? Try the guided walkthrough →
+            </button>
             <div class="suggestions">
               <button
                 data-prompt="What changed in web search APIs recently? Use official sources and include the dates."
@@ -218,6 +236,144 @@
         </footer>
       </aside>
     </div>
+    <dialog
+      id="quick-guide"
+      class="quick-guide"
+      aria-labelledby="guide-title"
+      aria-describedby="guide-description"
+    >
+      <div class="guide-heading">
+        <div>
+          <span class="eyebrow">A SMALL TOUR, AT YOUR PACE</span>
+          <h2 id="guide-title">Meet Minimi</h2>
+        </div>
+        <button
+          id="guide-close"
+          class="icon-button"
+          aria-label="Close quick guide"
+          autofocus
+        >
+          ×
+        </button>
+      </div>
+      <p id="guide-description">
+        Try these steps in order. Buttons prepare a message; you choose when to
+        send it. Keep <strong>Web · Auto</strong> selected for the search steps.
+      </p>
+      <ol class="guide-steps">
+        <li>
+          <div>
+            <h3>Give it something to remember</h3>
+            <p>
+              Send a detail in one chat. An explicit “Remember that…” pins a
+              message; ordinary messages can also be recalled.
+            </p>
+            <blockquote>I'm relocating to Bengaluru next spring.</blockquote>
+            <button
+              class="guide-use"
+              data-guide-prompt="I'm relocating to Bengaluru next spring."
+            >
+              Use this prompt
+            </button>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Recall it in a different conversation</h3>
+            <p>
+              After the first reply finishes, start a new chat. This paraphrase
+              tests cross-chat memory. Click an <strong>M1</strong> citation to
+              open the original message and timestamp.
+            </p>
+            <blockquote>
+              Which city am I moving to, and when did I mention it?
+            </blockquote>
+            <button
+              class="guide-use"
+              data-guide-new-chat
+              data-guide-prompt="Which city am I moving to, and when did I mention it?"
+            >
+              New chat + use prompt
+            </button>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Research something current</h3>
+            <p>
+              Watch the search status, open the web citations, and expand
+              <strong>Response details</strong> to inspect searches, timing and
+              retrieved context.
+            </p>
+            <blockquote>
+              Find the latest stable Python release and its release date. Use
+              official sources.
+            </blockquote>
+            <button
+              class="guide-use"
+              data-guide-prompt="Find the latest stable Python release and its release date. Use official sources."
+            >
+              Use this prompt
+            </button>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Follow the conversation</h3>
+            <p>
+              Ask this in the same chat as step 3. Minimi uses the previous
+              question to interpret the follow-up.
+            </p>
+            <blockquote>
+              What about Node.js? Include the release date and official sources.
+            </blockquote>
+            <button
+              class="guide-use"
+              data-guide-prompt="What about Node.js? Include the release date and official sources."
+            >
+              Use this prompt
+            </button>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Check what you asked, and when</h3>
+            <p>
+              Choose your timezone below the composer. Compare the answer with
+              the original questions in <strong>Memory → Timeline</strong>.
+            </p>
+            <blockquote>
+              What did I ask today? Include the times in my selected timezone.
+            </blockquote>
+            <button
+              class="guide-use"
+              data-guide-prompt="What did I ask today? Include the times in my selected timezone."
+            >
+              Use this prompt
+            </button>
+          </div>
+        </li>
+        <li>
+          <div>
+            <h3>Keep control of your history</h3>
+            <p>
+              Open <strong>Memory</strong> to search, filter by date, pin,
+              export or clear history. Use the sidebar trash icon to delete a
+              single chat. Web mode can be set to Auto, Always or Off. Use the
+              stop button to interrupt a reply.
+            </p>
+            <button id="guide-memory" class="guide-use">
+              Open memory notebook
+            </button>
+          </div>
+        </li>
+      </ol>
+      <p class="guide-limits">
+        Memory belongs to this browser workspace and retrieval is bounded. Web
+        sources and memory references help you check an answer; they do not
+        guarantee every claim is correct.
+      </p>
+    </dialog>
     <div id="backdrop" class="backdrop hidden"></div>
   </body>
 </html>

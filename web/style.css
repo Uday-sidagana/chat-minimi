@@ -1059,3 +1059,142 @@ select:focus-visible {
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.guide-toggle {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--green);
+  border-radius: 9px;
+  padding: 8px 11px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.welcome-guide {
+  border: 0;
+  background: none;
+  color: var(--green);
+  font-size: 12px;
+  padding: 10px;
+  margin-top: 10px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.quick-guide {
+  width: min(620px, calc(100vw - 28px));
+  max-height: calc(100dvh - 40px);
+  box-sizing: border-box;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--canvas);
+  box-shadow: 0 24px 90px #142b2630;
+  overflow-y: auto;
+}
+.quick-guide::backdrop {
+  background: #172b2466;
+}
+.guide-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.guide-heading .eyebrow {
+  font-size: 9px;
+}
+.guide-heading h2 {
+  margin: 10px 0 0;
+  font-size: 28px;
+  letter-spacing: -1px;
+}
+.quick-guide > p {
+  line-height: 1.7;
+  color: #65715f;
+  font-size: 12px;
+}
+.guide-steps {
+  list-style: none;
+  padding: 0;
+  margin: 22px 0;
+  counter-reset: guide;
+}
+.guide-steps li {
+  display: flex;
+  gap: 14px;
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+  counter-increment: guide;
+}
+.guide-steps li::before {
+  content: counter(guide);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: var(--green);
+  background: var(--green-light);
+  font-size: 12px;
+  font-weight: 600;
+}
+.guide-steps li > div {
+  min-width: 0;
+}
+.guide-steps h3 {
+  font-size: 14px;
+  margin: 4px 0 7px;
+}
+.guide-steps p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #65715f;
+  margin: 0 0 10px;
+}
+.guide-steps blockquote {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-left: 2px solid #a6b48e;
+  background: #f0f4e9;
+  border-radius: 0 7px 7px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.guide-use {
+  border: 1px solid #d4dfc9;
+  background: #eaf0e0;
+  color: var(--green);
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+.guide-use:hover,
+.guide-toggle:hover {
+  background: #e1ead5;
+}
+.quick-guide .guide-limits {
+  font-size: 11px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+@media (max-width: 640px) {
+  .header-actions {
+    gap: 6px;
+  }
+  .guide-toggle {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+  .quick-guide {
+    padding: 20px;
+  }
+  .mode-label {
+    min-width: 0;
+  }
+}
