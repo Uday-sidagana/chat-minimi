@@ -1020,3 +1020,42 @@ select:focus-visible {
   outline: 2px solid #8ca368;
   outline-offset: 5px;
 }
+
+.chat-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+}
+.chat-row.active {
+  background: #e1e8d7;
+}
+.chat-row .chat-link {
+  flex: 1;
+  min-width: 0;
+}
+.delete-chat {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 36px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 6px;
+  color: #7c857e;
+  background: transparent;
+  cursor: pointer;
+}
+.delete-chat:hover {
+  color: #a33b36;
+  background: #f4e8e4;
+}
+.delete-chat:focus-visible {
+  outline: 2px solid #a33b36;
+}
+.delete-chat:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

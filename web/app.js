@@ -200,14 +200,47 @@ async function chats() {
     all
       .map(
         (c) =>
-          `<button class="chat-link ${c.id === selected ? "active" : ""}" data-id="${esc(c.id)}" title="${esc(c.title)}">${esc(c.title)}</button>`,
+          `<div class="chat-row ${c.id === selected ? "active" : ""}"><button class="chat-link ${c.id === selected ? "active" : ""}" data-id="${esc(c.id)}" title="${esc(c.title)}">${esc(c.title)}</button><button class="delete-chat" data-id="${esc(c.id)}" title="Delete conversation" aria-label="Delete conversation: ${esc(c.title)}" ${busy ? "disabled" : ""}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg></button></div>`,
       )
       .join("") ||
     '<p class="sidebar-empty">Your next good question starts here.</p>';
   document
     .querySelectorAll(".chat-link")
     .forEach((b) => (b.onclick = () => openChat(b.dataset.id)));
+  document.querySelectorAll(".delete-chat").forEach((b) => {
+    b.onclick = () =>
+      removeChat(b.dataset.id, all.find((c) => c.id === b.dataset.id)?.title);
+  });
   return all;
+}
+async function removeChat(id, title) {
+  if (busy) {
+    error("Stop the current reply before deleting a conversation.");
+    return;
+  }
+  if (
+    !confirm(
+      `Delete “${title || "this conversation"}”? Its messages, pins and semantic memory will be removed. This cannot be undone.`,
+    )
+  )
+    return;
+  try {
+    await api("/api/chats/" + id, { method: "DELETE" });
+    if (selected === id) {
+      selected = null;
+      rows = [];
+      requestKey = null;
+      lastText = null;
+      localStorage.removeItem("minimi-chat");
+      $("#memory-hint").classList.add("hidden");
+      render();
+    }
+    error();
+    await chats();
+    await loadMemory();
+  } catch (e) {
+    error(e.message);
+  }
 }
 async function newChat() {
   if (busy) return;
@@ -330,6 +363,9 @@ function setBusy(value) {
   $("#new-chat").disabled = value;
   $("#web-mode").disabled = value;
   $("#timezone").disabled = value;
+  document
+    .querySelectorAll(".delete-chat")
+    .forEach((b) => (b.disabled = value));
 }
 function streamRow() {
   return rows.find((r) => r.id === current);

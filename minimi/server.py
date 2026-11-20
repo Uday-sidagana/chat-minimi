@@ -184,6 +184,13 @@ def create_app(settings=None, store=None, agent=None):
     def new_chat(request: Request, response: Response):
         return storage().create_chat(identity(request, response))
 
+    @app.delete("/api/chats/{cid}", status_code=204)
+    def delete_chat(cid: UUID, request: Request, response: Response):
+        if not storage().delete_chat(identity(request, response), str(cid)):
+            raise HTTPException(404, "Conversation not found.")
+        response.status_code = 204
+        return response
+
     @app.get("/api/chats/{cid}")
     def conversation(
         cid: UUID, request: Request, response: Response, before: int | None = None

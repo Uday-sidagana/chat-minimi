@@ -202,3 +202,34 @@ def test_referenced_memory_is_saved_with_final_response(client, store, agent):
     )[-1]["message"]
     assert result["metadata"]["memory_citations"][0]["id"] == source["user_id"]
     assert "invented" not in result["content"]
+
+
+def test_delete_one_chat_cascades_memory_and_preserves_other_chats(client, store):
+    cid, keep = chat(client), chat(client)
+    source = frames(
+        client.post(
+            "/api/chats/" + cid + "/messages",
+            json=payload(text="Remember that my secret codename is Fern."),
+        )
+    )
+    sid, _ = store.space(client.cookies.get("minimi_workspace"))
+    mid = source[0]["user_id"]
+    store.save_embedding(sid, mid, "test", [1.0, 0.0])
+    assert client.delete("/api/chats/" + cid).status_code == 204
+    assert client.get("/api/chats/" + cid).status_code == 404
+    assert client.get("/api/chats/" + keep).status_code == 200
+    assert store.get_message(sid, mid) is None
+    assert store.embeddings(sid, "test") == {}
+    assert client.get("/api/memory?q=Fern").json()["total"] == 0
+    assert "Fern" not in client.get("/api/export").text
+    assert client.delete("/api/chats/" + cid).status_code == 404
+
+
+def test_delete_chat_cannot_cross_browser_workspace(client, store):
+    cid = chat(client)
+    with TestClient(
+        create_app(Settings(api_key="fake"), store=store, agent=FakeAgent())
+    ) as other:
+        other.get("/api/session")
+        assert other.delete("/api/chats/" + cid).status_code == 404
+    assert client.get("/api/chats/" + cid).status_code == 200

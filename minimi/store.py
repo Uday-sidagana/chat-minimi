@@ -319,6 +319,14 @@ class Store:
                 ).rowcount
             )
 
+    def delete_chat(self, sid, cid):
+        with self.connect() as db:
+            return bool(
+                db.execute(
+                    "DELETE FROM mm_chats WHERE id=? AND space_id=?", (cid, sid)
+                ).rowcount
+            )
+
     def forget(self, sid):
         with self.connect() as db:
             db.execute("BEGIN IMMEDIATE")
