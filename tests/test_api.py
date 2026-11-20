@@ -233,3 +233,29 @@ def test_delete_chat_cannot_cross_browser_workspace(client, store):
         other.get("/api/session")
         assert other.delete("/api/chats/" + cid).status_code == 404
     assert client.get("/api/chats/" + cid).status_code == 200
+
+
+def test_hosted_app_import_and_ui_do_not_require_a_writable_filesystem(tmp_path):
+    path = tmp_path / "must-not-create" / "local.sqlite"
+    with TestClient(create_app(Settings(hosted=True, db_path=path))) as c:
+        assert c.get("/").status_code == 200
+        assert c.get("/assets/app.js").status_code == 200
+        assert c.get("/healthz").json()["storage"] == "required"
+        response = c.get("/api/session")
+        assert response.status_code == 503 and "DATABASE_URL" in response.text
+    assert not path.parent.exists()
+
+
+def test_hosted_config_ignores_local_dotenv(monkeypatch):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    def forbidden_read(*args):
+        raise AssertionError("Hosted mode must not read a local .env")
+
+    monkeypatch.setattr("minimi.config.dotenv_values", forbidden_read)
+    settings = Settings.load()
+    assert settings.hosted and not settings.api_key and not settings.database_url
+    monkeypatch.setenv("OPENAI_API_KEY", "fake-deployment-key")
+    assert Settings.load().api_key == "fake-deployment-key"

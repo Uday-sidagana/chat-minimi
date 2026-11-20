@@ -21,7 +21,8 @@ class Settings:
 
     @classmethod
     def load(cls):
-        values = dotenv_values(ROOT / ".env")
+        hosted = os.environ.get("VERCEL") == "1"
+        values = {} if hosted else dotenv_values(ROOT / ".env")
 
         def get(name, default=""):
             return os.environ.get(name) or values.get(name) or default
@@ -33,7 +34,7 @@ class Settings:
             database_url=get("DATABASE_URL"),
             max_daily_turns=int(get("MAX_DAILY_TURNS", "200")),
             demo_password=get("DEMO_PASSWORD"),
-            hosted=os.environ.get("VERCEL") == "1",
+            hosted=hosted,
             semantic_memory=get("SEMANTIC_MEMORY", "true").lower()
             in ("true", "1", "yes"),
             embedding_model=get("EMBEDDING_MODEL", "text-embedding-3-small"),

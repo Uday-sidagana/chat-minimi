@@ -1,0 +1,20 @@
+# Local secrets, state and developer tools never belong in an upload.
+.env
+.env.*
+.venv/
+.data/
+runs/
+node_modules/
+.git/
+.vercel/
+.pytest_cache/
+.ruff_cache/
+**/__pycache__/
+**/*.pyc
+*.egg-info/
+# Keep these in GitHub for reviewers; they are not runtime dependencies.
+.github/
+tests/
+scripts/
+docs/
+evaluation/

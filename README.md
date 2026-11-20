@@ -71,19 +71,39 @@ GitHub Actions also runs a real Postgres persistence/isolation contract test. Lo
 
 ## Deploy on Vercel
 
-Import this repository using the **FastAPI** preset, root directory `./`, with default build/output settings. `app.py` and `vercel.json` supply the entry point. Add:
+1. Create a dedicated Neon project named `chat-minimi`. In **Connect**, enable **Connection pooling** and copy the Postgres connection string, retaining `sslmode=require`. Pick a database region near your Vercel function region. See [Neon's pooling guide](https://neon.com/docs/connect/connection-pooling).
+2. In [Vercel New Project](https://vercel.com/new), import `Uday-sidagana/chat-minimi`, branch **main**. Use these settings:
 
-| Variable | Value |
+| Setting | Value |
 | --- | --- |
-| `OPENAI_API_KEY` | Your API key |
-| `DATABASE_URL` | A Postgres connection string, e.g. a Neon pooled URL with `sslmode=require` |
-| `OPENAI_MODEL` | `gpt-5.4-mini` |
-| `REASONING_EFFORT` | `none` |
-| `SEMANTIC_MEMORY` | Optional, `true` by default; set `false` for keyword-only memory |
-| `EMBEDDING_MODEL` | Optional, `text-embedding-3-small` by default |
-| `DEMO_PASSWORD` | Optional shared reviewer password; username is `reviewer` |
-| `MAX_DAILY_TURNS` | Optional global UTC-day budget, default `200` |
+| Project name | `chat-minimi` (or an available name) |
+| Framework preset | **FastAPI** |
+| Root directory | `./` |
+| Build command | Leave override off / default |
+| Output directory | Leave override off / default |
+| Install command | Leave override off / default |
 
-Hosted storage requires Postgres; the app refuses to store conversations in Vercel's temporary filesystem. Tables are created on first use. Keep this database separate from other projects. This repository includes deployment configuration, but does not claim a verified live deployment.
+Python 3.12, dependencies, static assets and the streaming function configuration are supplied by the repository. No Docker, frontend build or separate backend service is needed. See [Vercel's FastAPI guide](https://vercel.com/docs/frameworks/backend/fastapi).
+
+3. Add these variables in Vercel. Set secrets directly in the dashboard, not in GitHub or a chat message:
+
+| Variable | Value | Required? |
+| --- | --- | --- |
+| `OPENAI_API_KEY` | Your OpenAI API key | Yes |
+| `DATABASE_URL` | Your dedicated Neon pooled connection string | Yes |
+| `MAX_DAILY_TURNS` | `100` for an initial reviewer demo | Optional; app default is 200 |
+| `OPENAI_MODEL` | `gpt-5.4-mini` | Optional; already the default |
+| `REASONING_EFFORT` | `none` | Optional; already the default |
+| `SEMANTIC_MEMORY` | `true` | Optional; already the default |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Optional; already the default |
+| `DEMO_PASSWORD` | A shared password; login username is `reviewer` | Optional |
+
+Add the variables to **Production**. If you also enable Preview deployments, use a separate Neon branch/database for Preview. Environment changes require a redeploy. Do not set `VERCEL` manually; the platform supplies it.
+
+4. Click **Deploy**. The application creates its tables on first use. Hosted mode requires Postgres and reads only deployment environment variables, never a bundled `.env`. Local SQLite data does not migrate automatically.
+5. Verify the deployed site: open **Quick guide**, send a message, reload to check persistence, start a new chat to test recall, run a web search and inspect its citations, then try deleting a disposable test chat. `/healthz` reports the model and storage configuration; opening the app also exercises the actual database connection through `/api/session`.
+6. Ensure the production URL is accessible to reviewers. If Vercel deployment protection or `DEMO_PASSWORD` is enabled, give reviewers the corresponding access. Copy the working URL into the submission.
+
+The runtime bundle excludes tests, screenshots, evaluation data, browser tooling, local state and secrets. These supporting materials remain in GitHub where useful for the challenge. The configuration is ready for deployment; a live deployment still needs the Vercel project and database credentials.
 
 Memory is server-side, scoped to an opaque browser cookie; clearing that cookie loses access to its workspace. Selected history and the question are sent to OpenAI. Semantic retrieval also sends bounded text batches to the embedding API; embeddings are saved in the same database and deleted with their source messages. It is host-managed retrieval, not a second agent tool. Use the notebook to export or delete application history. See [design.md](design.md) for privacy, limits and failure handling.
